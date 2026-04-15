@@ -1,0 +1,456 @@
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+ <title>Importateur Serein – Simulateur de coût de revient</title>
+ <meta name="description" content="Simulez le coût réel de vos importations : droits de douane, TVA, assurance. Outil gratuit pour importateurs débutants.">
+ <style>
+ * {
+ margin: 0;
+ padding: 0;
+ box-sizing: border-box;
+ }
+
+ body {
+ font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+ background: #eef2f7;
+ padding: 20px;
+ color: #1a2c3e;
+ }
+
+ .container {
+ max-width: 1400px;
+ margin: 0 auto;
+ background: white;
+ border-radius: 28px;
+ box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+ overflow: hidden;
+ padding: 24px 28px 32px 28px;
+ }
+
+ h1 {
+ font-size: 1.8rem;
+ color: #0b3b5f;
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ flex-wrap: wrap;
+ margin-bottom: 8px;
+ }
+
+ h1 small {
+ font-size: 0.8rem;
+ font-weight: normal;
+ background: #e9ecef;
+ padding: 4px 12px;
+ border-radius: 40px;
+ color: #2c5a7a;
+ }
+
+ .sub {
+ color: #2c5a7a;
+ border-left: 4px solid #2c7da0;
+ padding-left: 16px;
+ margin: 8px 0 20px 0;
+ font-size: 0.95rem;
+ }
+
+ .toolbar {
+ display: flex;
+ gap: 12px;
+ flex-wrap: wrap;
+ margin-bottom: 20px;
+ justify-content: flex-end;
+ }
+
+ .btn {
+ background: #2c7da0;
+ border: none;
+ padding: 8px 18px;
+ border-radius: 40px;
+ color: white;
+ font-weight: 600;
+ cursor: pointer;
+ font-size: 0.8rem;
+ transition: 0.15s;
+ display: inline-flex;
+ align-items: center;
+ gap: 6px;
+ }
+
+ .btn-excel {
+ background: #1f7b4d;
+ }
+
+ .btn-excel:hover {
+ background: #16633d;
+ }
+
+ .btn-pdf {
+ background: #b23c1c;
+ }
+
+ .btn-pdf:hover {
+ background: #8e2e14;
+ }
+
+ .btn:hover {
+ filter: brightness(0.92);
+ transform: translateY(-1px);
+ }
+
+ .table-wrapper {
+ overflow-x: auto;
+ margin: 20px 0;
+ border-radius: 16px;
+ border: 1px solid #e2e8f0;
+ }
+
+ table {
+ width: 100%;
+ border-collapse: collapse;
+ font-size: 0.8rem;
+ min-width: 900px;
+ }
+
+ th, td {
+ border: 1px solid #cbdde9;
+ padding: 10px 6px;
+ text-align: center;
+ vertical-align: middle;
+ }
+
+ th {
+ background-color: #1f5068;
+ color: white;
+ font-weight: 600;
+ font-size: 0.75rem;
+ position: sticky;
+ top: 0;
+ }
+
+ .input-cell input {
+ width: 90px;
+ padding: 6px 4px;
+ border: 1.5px solid #bdd3e6;
+ border-radius: 10px;
+ text-align: center;
+ background-color: #f3f9ff;
+ font-size: 0.8rem;
+ transition: 0.1s;
+ }
+
+ .input-cell input:focus {
+ outline: none;
+ border-color: #2c7da0;
+ background-color: #fff;
+ }
+
+ .result-cell {
+ background-color: #f8fafc;
+ font-weight: 500;
+ }
+
+ .result-unit {
+ background-color: #e1f5e8;
+ font-weight: 700;
+ }
+
+ .footer-note {
+ margin-top: 25px;
+ background: #f8fafc;
+ border-radius: 20px;
+ padding: 14px 18px;
+ border-left: 6px solid #2c7da0;
+ font-size: 0.8rem;
+ }
+
+ .legend {
+ display: flex;
+ gap: 24px;
+ flex-wrap: wrap;
+ margin: 10px 0 15px;
+ font-size: 0.7rem;
+ }
+
+ .legend span {
+ display: inline-flex;
+ align-items: center;
+ gap: 6px;
+ }
+
+ .badge-blue {
+ background: #f3f9ff;
+ border: 1.5px solid #bdd3e6;
+ padding: 2px 10px;
+ border-radius: 20px;
+ }
+
+ .taux-helper {
+ font-size: 0.75rem;
+ background: #fef9e3;
+ padding: 12px 16px;
+ border-radius: 16px;
+ margin: 15px 0;
+ }
+
+ .btn-add {
+ background: #3c6e47;
+ margin-top: 8px;
+ margin-bottom: 10px;
+ }
+
+ @media (max-width: 700px) {
+ .container { padding: 16px; }
+ .input-cell input { width: 65px; font-size: 0.7rem; }
+ th, td { padding: 6px 3px; font-size: 0.7rem; }
+ .btn { padding: 6px 12px; font-size: 0.7rem; }
+ }
+
+ @media print {
+ body { background: white; padding: 0; }
+ .toolbar, .btn-add, .btn, .taux-helper { display: none; }
+ .container { padding: 0; box-shadow: none; }
+ }
+ </style>
+</head>
+<body>
+
+<div class="container">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+ <div>
+ <h1>
+ Importateur Serein
+ <small>simulateur de coût de revient</small>
+ </h1>
+ <div class="sub"> Remplissez les cases bleues → calcul automatique des droits, TVA et coût unitaire réel</div>
+ </div>
+ <div class="toolbar">
+ <button class="btn btn-excel" id="exportExcelBtn"> Exporter Excel (CSV)</button>
+ <button class="btn" id="printBtn"> Imprimer / PDF</button>
+ </div>
+ </div>
+
+ <div class="legend">
+ <span> <span class="badge-blue">Saisie libre</span></span>
+ <span> Résultats automatiques (calculs douane + TVA 18%)</span>
+ <span> Taux droits : voir tableau indicatif ci-dessous</span>
+ </div>
+
+ <div class="table-wrapper">
+ <table id="simulateurTable">
+ <thead>
+ <tr>
+ <th>Produit</th>
+ <th>Prix unitaire FOB (€)</th>
+ <th>Quantité</th>
+ <th>Fret total (€)<br><span style="font-weight:normal;">(mer + débarquement)</span></th>
+ <th>Taux droits (%)</th>
+ <th>Assurance (€)<br><span style="font-weight:normal;">(0,6% par défaut)</span></th>
+ <th>Valeur en Douane (€)</th>
+ <th>Droits de Douane (€)</th>
+ <th>Base TVA (€)</th>
+ <th>TVA 18% (€)</th>
+ <th>Coût total après douane (€)</th>
+ <th> Coût unitaire réel (€)</th>
+ </tr>
+ </thead>
+ <tbody id="tableBody"></tbody>
+ </table>
+ </div>
+
+ <button class="btn btn-add" id="ajouterLigneBtn"> Ajouter un produit</button>
+
+ <div class="taux-helper">
+ <strong>Codes HS indicatifs (taux droits de douane UE) :</strong><br>
+ Textile 12% | Chaussures 8-17% | Jouets 4,7% | Meubles bois 0% | Électronique 0-3,5% | Lampes LED 3,5% | Plastique 6,5% | Maroquinerie 3-9%.<br>
+ Vérifiez le code exact sur <a href="https://www.douane.gouv.fr" target="_blank" rel="noopener">douane.gouv.fr</a> (Rubrique RITA/Taric).
+ </div>
+
+ <div class="footer-note">
+ <strong>Méthode de calcul (normes douanières françaises) :</strong><br>
+ • Assurance = (Prix unitaire × Quantité) × 0,6% – modifiable manuellement<br>
+ • Valeur en Douane = (Prix×Qté) + Fret total + Assurance<br>
+ • Droits de Douane = Valeur en Douane × (Taux droits / 100)<br>
+ • Base TVA = Valeur en Douane + Droits de Douane<br>
+ • TVA (18%) = Base TVA × 0,18 (France métropole)<br>
+ • Coût unitaire réel = (Valeur douane + Droits + TVA) / Quantité<br>
+ La colonne verte = prix de revient réel après dédouanement, dans votre magasin.
+ </div>
+</div>
+
+<script>
+ // Simulateur complet – fonctionne sans serveur, prêt pour GitHub Pages
+ let ligneCounter = 0;
+
+ function formatEuro(value) {
+ return value.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+ }
+
+ function calculerValeurs(prix, qte, fret, taux, assuranceSaisie) {
+ if (isNaN(prix)) prix = 0;
+ if (isNaN(qte)) qte = 0;
+ if (isNaN(fret)) fret = 0;
+ if (isNaN(taux)) taux = 0;
+ let marchandise = prix * qte;
+ let assurance = marchandise * 0.006;
+ if (!isNaN(assuranceSaisie) && assuranceSaisie !== null && assuranceSaisie !== '') assurance = assuranceSaisie;
+ let valeurDouane = marchandise + fret + assurance;
+ let droits = valeurDouane * (taux / 100);
+ let baseTVA = valeurDouane + droits;
+ let tva = baseTVA * 0.18;
+ let coutTotal = valeurDouane + droits + tva;
+ let coutUnitaire = qte > 0 ? coutTotal / qte : 0;
+ return { assurance, valeurDouane, droits, baseTVA, tva, coutTotal, coutUnitaire };
+ }
+
+ function mettreAJourLigne(rowId) {
+ const row = document.getElementById(`row-${rowId}`);
+ if (!row) return;
+ const inputs = row.querySelectorAll('input');
+ const prix = parseFloat(inputs[0]?.value) || 0;
+ const qte = parseInt(inputs[1]?.value) || 0;
+ const fret = parseFloat(inputs[2]?.value) || 0;
+ const taux = parseFloat(inputs[3]?.value) || 0;
+ let assuranceSaisie = parseFloat(inputs[4]?.value);
+ if (isNaN(assuranceSaisie)) assuranceSaisie = null;
+
+ const vals = calculerValeurs(prix, qte, fret, taux, assuranceSaisie);
+ 
+ const afficherCell = (idx, valeur) => {
+ if (row.cells[idx]) row.cells[idx].innerText = formatEuro(valeur);
+ };
+ afficherCell(6, vals.assurance);
+ afficherCell(7, vals.valeurDouane);
+ afficherCell(8, vals.droits);
+ afficherCell(9, vals.baseTVA);
+ afficherCell(10, vals.tva);
+ afficherCell(11, vals.coutTotal);
+ afficherCell(12, vals.coutUnitaire);
+ if (row.cells[12]) row.cells[12].style.backgroundColor = "#e1f5e8";
+ }
+
+ function ajouterLigne(produitNom = "Nouveau produit", prixDef = 10, qteDef = 100, fretDef = 200, tauxDef = 5.5, assuranceDef = null) {
+ const id = ligneCounter++;
+ const tbody = document.getElementById('tableBody');
+ const tr = document.createElement('tr');
+ tr.id = `row-${id}`;
+
+ // Produit (texte)
+ const tdNom = document.createElement('td');
+ const inputNom = document.createElement('input');
+ inputNom.type = 'text';
+ inputNom.value = produitNom;
+ inputNom.style.width = '110px';
+ inputNom.style.background = '#f3f9ff';
+ inputNom.style.border = '1.5px solid #bdd3e6';
+ inputNom.style.borderRadius = '10px';
+ inputNom.style.padding = '5px';
+ tdNom.appendChild(inputNom);
+ tr.appendChild(tdNom);
+
+ const ajoutCellInput = (valeur, step = "0.01", width = "85px") => {
+ const td = document.createElement('td');
+ td.className = 'input-cell';
+ const inp = document.createElement('input');
+ inp.type = 'number';
+ inp.value = valeur;
+ inp.step = step;
+ inp.style.width = width;
+ td.appendChild(inp);
+ tr.appendChild(td);
+ return inp;
+ };
+
+ const inpPrix = ajoutCellInput(prixDef, "0.01");
+ const inpQte = ajoutCellInput(qteDef, "1");
+ const inpFret = ajoutCellInput(fretDef, "10");
+ const inpTaux = ajoutCellInput(tauxDef, "0.1");
+ let assuranceParDefaut = assuranceDef !== null ? assuranceDef : (prixDef * qteDef * 0.006).toFixed(2);
+ const inpAssu = ajoutCellInput(assuranceParDefaut, "1");
+
+ // 7 cellules résultats
+ for (let i = 0; i < 7; i++) {
+ const td = document.createElement('td');
+ td.className = 'result-cell';
+ tr.appendChild(td);
+ }
+
+ tbody.appendChild(tr);
+
+ const inputs = [inpPrix, inpQte, inpFret, inpTaux, inpAssu];
+ inputs.forEach(inp => {
+ inp.addEventListener('input', () => mettreAJourLigne(id));
+ inp.addEventListener('change', () => mettreAJourLigne(id));
+ });
+ mettreAJourLigne(id);
+ }
+
+ // Export CSV (Excel)
+ function exportToCSV() {
+ const rows = document.querySelectorAll('#tableBody tr');
+ const data = [];
+ // En-têtes
+ data.push(['Produit', 'Prix unitaire FOB (€)', 'Quantité', 'Fret total (€)', 'Taux droits (%)', 'Assurance (€)', 
+ 'Valeur en Douane (€)', 'Droits de Douane (€)', 'Base TVA (€)', 'TVA 18% (€)', 'Coût total après douane (€)', 'Coût unitaire réel (€)']);
+ 
+ for (let row of rows) {
+ const inputs = row.querySelectorAll('input');
+ const cells = row.querySelectorAll('.result-cell');
+ if (inputs.length >= 5 && cells.length >= 7) {
+ const ligne = [
+ inputs[0].value,
+ parseFloat(inputs[1].value) || 0,
+ parseInt(inputs[2].value) || 0,
+ parseFloat(inputs[3].value) || 0,
+ parseFloat(inputs[4].value) || 0,
+ cells[0].innerText.replace(' €', '').replace(/\s/g, ''),
+ cells[1].innerText.replace(' €', '').replace(/\s/g, ''),
+ cells[2].innerText.replace(' €', '').replace(/\s/g, ''),
+ cells[3].innerText.replace(' €', '').replace(/\s/g, ''),
+ cells[4].innerText.replace(' €', '').replace(/\s/g, ''),
+ cells[5].innerText.replace(' €', '').replace(/\s/g, ''),
+ cells[6].innerText.replace(' €', '').replace(/\s/g, '')
+ ];
+ data.push(ligne);
+ }
+ }
+ 
+ let csvContent = data.map(row => row.join(';')).join('\n');
+ // Ajout BOM UTF-8 pour accents
+ const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+ const link = document.createElement('a');
+ const url = URL.createObjectURL(blob);
+ link.href = url;
+ link.setAttribute('download', 'simulateur_importateur_serein.csv');
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+ URL.revokeObjectURL(url);
+ }
+
+ // Impression / PDF (via navigateur)
+ function printSimulator() {
+ window.print();
+ }
+
+ // Initialisation avec exemples
+ function initExemples() {
+ ajouterLigne("T-shirt coton", 2.50, 500, 350, 12, 7.50);
+ ajouterLigne("Coque téléphone", 0.80, 2000, 550, 0, 9.60);
+ ajouterLigne("Lampe LED bois", 8.00, 100, 220, 3.5, 4.80);
+ ajouterLigne("Chaussures sport", 12.00, 300, 480, 8, null);
+ }
+
+ // Événements
+ document.getElementById('exportExcelBtn')?.addEventListener('click', exportToCSV);
+ document.getElementById('printBtn')?.addEventListener('click', printSimulator);
+ document.getElementById('ajouterLigneBtn')?.addEventListener('click', () => ajouterLigne("Nouveau produit", 5, 50, 150, 5.0, null));
+ 
+ initExemples();
+</script>
+</body>
+</html>
+```
